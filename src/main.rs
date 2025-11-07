@@ -3,17 +3,20 @@ use stitchy_core::{AlignmentMode, ImageFiles, FilePath, Stitch};
 
 #[derive(Parser)]
 struct Cli{
-    images: Vec<std::path::PathBuf>,
+    image_paths: Vec<std::path::PathBuf>,
+    /// Output file name (default: stitched_output.png)
+    #[arg(short = 'o', long = "output", default_value = "stitched_output.png")]
+    output: std::path::PathBuf,
 }
 
 fn main() {
     let args = Cli::parse();
     let mut builder = ImageFiles::builder();
-    for img_path in args.images{
+    for img_path in args.image_paths{
         builder = match builder.add_file(FilePath::new(img_path)) {
             Ok(b) => b,
             Err(e) => {
-                eprintln!("Failed to add directory: {}", e);
+                eprintln!("Failed to add file: {}", e);
                 return;
             }
         };
@@ -29,9 +32,9 @@ fn main() {
                     let result = stitcher.stitch();
                     match result {
                         Ok(final_image) => {
-                            let save_result = final_image.save("stitched_output.png");
+                            let save_result = final_image.save(&args.output);
                             match save_result {
-                                Ok(_) => println!("Stitched image saved as stitched_output.png"),
+                                Ok(_) => println!("Stitched image saved as {}", args.output.display()),
                                 Err(e) => eprintln!("Failed to save stitched image: {}", e),
                             }
                         }
